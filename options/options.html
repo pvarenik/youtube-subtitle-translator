@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>YouTube Subtitle Translator - Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main>
+    <div class="top-bar">
+      <h1 id="txt-title"></h1>
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en" title="English">
+          <span class="flag">&#127468;&#127463;</span>
+          <span class="lang-label">EN</span>
+        </button>
+        <button class="lang-btn" data-lang="ru" title="Russian">
+          <span class="flag">&#127479;&#127482;</span>
+          <span class="lang-label">RU</span>
+        </button>
+      </div>
+    </div>
+
+    <section class="card">
+      <h2 id="txt-section-langs"></h2>
+
+      <label class="field">
+        <span id="txt-source-lang"></span>
+        <select id="sourceLang">
+          <option value="auto" id="opt-auto"></option>
+          <option value="en">English</option>
+          <option value="ru">Russian</option>
+          <option value="de">German</option>
+          <option value="fr">French</option>
+          <option value="es">Spanish</option>
+          <option value="it">Italian</option>
+          <option value="pt">Portuguese</option>
+          <option value="pl">Polish</option>
+          <option value="uk">Ukrainian</option>
+          <option value="tr">Turkish</option>
+          <option value="zh">Chinese</option>
+          <option value="ja">Japanese</option>
+          <option value="ko">Korean</option>
+          <option value="ar">Arabic</option>
+        </select>
+        <p class="hint" id="txt-source-lang-hint"></p>
+      </label>
+
+      <label class="field">
+        <span id="txt-target-lang"></span>
+        <select id="targetLang">
+          <option value="en">English</option>
+          <option value="ru">Russian</option>
+          <option value="de">German</option>
+          <option value="fr">French</option>
+          <option value="es">Spanish</option>
+          <option value="it">Italian</option>
+          <option value="pt">Portuguese</option>
+          <option value="pl">Polish</option>
+          <option value="uk">Ukrainian</option>
+          <option value="tr">Turkish</option>
+          <option value="zh">Chinese</option>
+          <option value="ja">Japanese</option>
+          <option value="ko">Korean</option>
+          <option value="ar">Arabic</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2 id="txt-section-provider"></h2>
+
+      <label class="field">
+        <span id="txt-provider-label"></span>
+        <select id="provider">
+          <option value="google" id="opt-google"></option>
+          <option value="deepl" id="opt-deepl-free"></option>
+          <option value="deepl-pro" id="opt-deepl-pro"></option>
+          <option value="libretranslate">LibreTranslate</option>
+          <option value="custom" id="opt-custom"></option>
+        </select>
+      </label>
+
+      <label class="field" id="apiKeyField">
+        <span id="txt-apikey-label"></span>
+        <input type="password" id="apiKey" autocomplete="off" />
+        <p class="hint" id="txt-apikey-hint"></p>
+      </label>
+
+      <label class="field" id="endpointField">
+        <span id="txt-endpoint-label"></span>
+        <input type="text" id="customEndpoint" placeholder="https://example.com/translate" />
+        <p class="hint" id="txt-endpoint-hint"></p>
+      </label>
+    </section>
+
+    <div class="actions">
+      <button id="saveBtn"></button>
+      <span id="statusMsg" class="status"></span>
+    </div>
+  </main>
+
+  <script src="options.js"></script>
+</body>
+</html>

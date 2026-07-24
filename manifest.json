@@ -1,0 +1,48 @@
+{
+  "manifest_version": 2,
+  "name": "YouTube Subtitle Word Translator",
+  "version": "1.0.0",
+  "description": "Кликните на слово в субтитрах YouTube, чтобы увидеть его перевод во всплывающей подсказке.",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "permissions": [
+    "storage",
+    "https://*.youtube.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api-free.deepl.com/*",
+    "https://api.deepl.com/*",
+    "https://libretranslate.com/*",
+    "https://*/*"
+  ],
+  "browser_action": {
+    "default_popup": "options/options.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    },
+    "default_title": "Настройки переводчика субтитров"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "yt-subtitle-translator@example.com",
+      "strict_min_version": "78.0"
+    }
+  }
+}

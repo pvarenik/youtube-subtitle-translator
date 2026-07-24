@@ -1,0 +1,36 @@
+/* content.css */
+
+.ytst-word {
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+}
+
+.ytst-word:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+#ytst-tooltip {
+  position: fixed;
+  z-index: 2147483647;
+  max-width: 320px;
+  padding: 8px 12px;
+  background: #1f1f1f;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  word-wrap: break-word;
+}
+
+#ytst-tooltip.ytst-hidden {
+  display: none;
+}
+
+#ytst-tooltip.ytst-error {
+  background: #5c1e1e;
+}
