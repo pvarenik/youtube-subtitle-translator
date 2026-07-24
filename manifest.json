@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "YouTube Subtitle Word Translator",
   "version": "1.0.0",
-  "description": "Кликните на слово в субтитрах YouTube, чтобы увидеть его перевод во всплывающей подсказке.",
+  "description": "Click on a word in YouTube subtitles to see its translation in a tooltip.",
   "icons": {
     "48": "icons/icon-48.png",
     "96": "icons/icon-96.png"
@@ -22,7 +22,7 @@
       "48": "icons/icon-48.png",
       "96": "icons/icon-96.png"
     },
-    "default_title": "Настройки переводчика субтитров"
+    "default_title": "Subtitle translator settings"
   },
   "options_ui": {
     "page": "options/options.html",
