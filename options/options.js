@@ -28,7 +28,6 @@ var els = {
   apikeyHint:     document.getElementById("txt-apikey-hint"),
   endpointLbl:    document.getElementById("txt-endpoint-label"),
   endpointHint:   document.getElementById("txt-endpoint-hint"),
-  saveBtn:        document.getElementById("saveBtn"),
   sourceLang:     document.getElementById("sourceLang"),
   targetLang:     document.getElementById("targetLang"),
   provider:       document.getElementById("provider"),
@@ -70,7 +69,6 @@ function applyLang(lang) {
   els.apiKey.placeholder         = t.apikeyPlaceholder;
   els.endpointLbl.textContent    = t.endpointLabel;
   els.endpointHint.textContent   = t.endpointHint;
-  els.saveBtn.textContent        = t.save;
   document.documentElement.lang  = lang;
 
   rebuildSelect(els.sourceLang, SOURCE_LANG_CODES, t.langNames);
@@ -87,15 +85,35 @@ function applyLang(lang) {
   }
 }
 
+function nudgePopupResize() {
+  // Chrome's toolbar popup only measures its content once, at first paint;
+  // later DOM changes (like the API-key field appearing/disappearing)
+  // don't trigger a resize on their own. Forcing a reflow here makes the
+  // popup window grow/shrink to match. Harmless no-op cost in Firefox,
+  // which already tracks this live.
+  var root = document.documentElement;
+  var prev = root.style.display;
+  root.style.display = "none";
+  void root.offsetHeight; // force layout recalculation
+  root.style.display = prev;
+}
+
 function updateVisibility() {
   var p = els.provider.value;
   var showKey = (p === "deepl" || p === "deepl-pro" || p === "libretranslate" || p === "custom");
   var showEp  = (p === "custom");
   els.apiKeyField.style.display   = showKey ? "" : "none";
   els.endpointField.style.display = showEp  ? "" : "none";
+  nudgePopupResize();
 }
 
-function saveSettings() {
+function showSavedStatus() {
+  var t = I18N[currentLang];
+  els.statusMsg.textContent = t ? t.saved : "Saved!";
+  setTimeout(function() { els.statusMsg.textContent = ""; }, 2000);
+}
+
+function persistSettings() {
   var s = {
     sourceLang:     els.sourceLang.value,
     targetLang:     els.targetLang.value,
@@ -104,11 +122,13 @@ function saveSettings() {
     customEndpoint: els.customEndpoint.value.trim(),
     uiLang:         currentLang
   };
-  browser.storage.sync.set(s).then(function() {
-    var t = I18N[currentLang];
-    els.statusMsg.textContent = t ? t.saved : "Saved!";
-    setTimeout(function() { els.statusMsg.textContent = ""; }, 2000);
-  });
+  browser.storage.sync.set(s).then(showSavedStatus);
+}
+
+var saveDebounceTimer = null;
+function persistSettingsDebounced() {
+  if (saveDebounceTimer) { clearTimeout(saveDebounceTimer); }
+  saveDebounceTimer = setTimeout(persistSettings, 500);
 }
 
 function init(settings) {
@@ -121,14 +141,23 @@ function init(settings) {
   applyLang(settings.uiLang || "en");
   updateVisibility();
 
-  els.provider.addEventListener("change", updateVisibility);
-  els.saveBtn.addEventListener("click", saveSettings);
+  // Settings save automatically as they change - selects save right away,
+  // text inputs are debounced so we don't hit storage on every keystroke.
+  els.sourceLang.addEventListener("change", persistSettings);
+  els.targetLang.addEventListener("change", persistSettings);
+  els.provider.addEventListener("change", function() {
+    updateVisibility();
+    persistSettings();
+  });
+  els.apiKey.addEventListener("input", persistSettingsDebounced);
+  els.customEndpoint.addEventListener("input", persistSettingsDebounced);
 
   for (var i = 0; i < els.langBtns.length; i++) {
     (function(btn) {
       btn.addEventListener("click", function() {
         applyLang(btn.getAttribute("data-lang"));
         updateVisibility();
+        persistSettings();
       });
     })(els.langBtns[i]);
   }
