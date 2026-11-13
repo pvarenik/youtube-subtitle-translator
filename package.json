@@ -1,0 +1,14 @@
+{
+  "name": "yt-subtitle-translator",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Browser extension that translates YouTube subtitle words on click.",
+  "scripts": {
+    "lint": "web-ext lint",
+    "start": "web-ext run",
+    "build": "web-ext build --ignore-files \"node_modules/**\" \"package-lock.json\" \"web-ext-artifacts\" --overwrite-dest"
+  },
+  "devDependencies": {
+    "web-ext": "^8.0.0"
+  }
+}

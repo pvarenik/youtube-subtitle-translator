@@ -127,9 +127,34 @@ input[type="password"] {
   gap: 12px;
 }
 
+.btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: #f0f0f2;
+  border-color: #bbb;
+}
+
+.btn:active {
+  background: #e4e4e8;
+}
+
 .status {
   font-size: 13px;
   color: #2e7d32;
+}
+
+.status.status-error {
+  color: #b3261e;
 }
 
 .help-link {

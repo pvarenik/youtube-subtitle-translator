@@ -1,4 +1,6 @@
-// background.js - Firefox MV2, ASCII only, no async/await
+// background.js - Firefox/Chrome MV3 service worker, ASCII only, no async/await
+
+var api = (typeof browser !== "undefined") ? browser : chrome;
 
 var DEFAULT_SETTINGS = {
   sourceLang: "auto",
@@ -8,11 +10,54 @@ var DEFAULT_SETTINGS = {
   customEndpoint: ""
 };
 
+var FETCH_TIMEOUT_MS = 15000;
+var CACHE_LIMIT = 500;
+var cache = new Map();
+
 function getSettings() {
-  return browser.storage.sync.get(DEFAULT_SETTINGS).then(function(stored) {
+  return api.storage.sync.get(DEFAULT_SETTINGS).then(function(stored) {
     return Object.assign({}, DEFAULT_SETTINGS, stored);
   });
 }
+
+// ---------- Translation cache (LRU, lives while the worker is alive) ----------
+
+function cacheKey(settings, text) {
+  return settings.provider + "|" + settings.sourceLang + "|" +
+         settings.targetLang + "|" + settings.customEndpoint + "|" +
+         settings.apiKey + "|" + text;
+}
+
+function cacheGet(key) {
+  if (!cache.has(key)) { return null; }
+  var value = cache.get(key);
+  cache.delete(key);   // refresh recency
+  cache.set(key, value);
+  return value;
+}
+
+function cachePut(key, value) {
+  if (cache.has(key)) { cache.delete(key); }
+  cache.set(key, value);
+  if (cache.size > CACHE_LIMIT) {
+    var oldest = cache.keys().next().value;
+    cache.delete(oldest);
+  }
+}
+
+// ---------- Fetch with timeout ----------
+
+function fetchWithTimeout(url, options) {
+  var opts = Object.assign({}, options || {}, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  return fetch(url, opts).catch(function(err) {
+    if (err && (err.name === "TimeoutError" || err.name === "AbortError")) {
+      throw new Error("request timed out after " + (FETCH_TIMEOUT_MS / 1000) + "s");
+    }
+    throw err;
+  });
+}
+
+// ---------- Providers ----------
 
 function translateGoogle(text, sourceLang, targetLang) {
   var sl = sourceLang === "auto" ? "auto" : sourceLang;
@@ -23,7 +68,7 @@ function translateGoogle(text, sourceLang, targetLang) {
     + "&dt=t"
     + "&q=" + encodeURIComponent(text);
 
-  return fetch(url).then(function(resp) {
+  return fetchWithTimeout(url).then(function(resp) {
     if (!resp.ok) { throw new Error("Google HTTP " + resp.status); }
     return resp.json();
   }).then(function(data) {
@@ -46,7 +91,7 @@ function translateDeepL(text, sourceLang, targetLang, apiKey, isFree) {
     params.append("source_lang", sourceLang.toUpperCase());
   }
 
-  return fetch(base, {
+  return fetchWithTimeout(base, {
     method: "POST",
     headers: {
       "Authorization": "DeepL-Auth-Key " + apiKey,
@@ -70,6 +115,7 @@ function translateDeepL(text, sourceLang, targetLang, apiKey, isFree) {
 
 function translateLibre(text, sourceLang, targetLang, endpoint, apiKey) {
   var url = (endpoint || "https://libretranslate.com/translate").replace(/\/+$/, "");
+
   var body = {
     q: text,
     source: sourceLang === "auto" ? "auto" : sourceLang,
@@ -78,7 +124,7 @@ function translateLibre(text, sourceLang, targetLang, endpoint, apiKey) {
   };
   if (apiKey) { body.api_key = apiKey; }
 
-  return fetch(url, {
+  return fetchWithTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
@@ -96,6 +142,16 @@ function translateLibre(text, sourceLang, targetLang, endpoint, apiKey) {
   });
 }
 
+function isHttpUrl(u) {
+  return /^https?:\/\//i.test(u);
+}
+
+function endpointError(code, msg) {
+  var e = new Error(msg);
+  e.code = code;
+  return e;
+}
+
 function translateText(text, settings) {
   var p = settings.provider;
   var sl = settings.sourceLang;
@@ -106,22 +162,48 @@ function translateText(text, settings) {
   if (p === "google")        { return translateGoogle(text, sl, tl); }
   if (p === "deepl")         { return translateDeepL(text, sl, tl, key, true); }
   if (p === "deepl-pro")     { return translateDeepL(text, sl, tl, key, false); }
-  if (p === "libretranslate"){ return translateLibre(text, sl, tl, ep, key); }
-  if (p === "custom")        { return translateLibre(text, sl, tl, ep, key); }
+  if (p === "libretranslate"){
+    if (ep && !isHttpUrl(ep)) {
+      return Promise.reject(endpointError("INVALID_ENDPOINT", "invalid endpoint URL"));
+    }
+    return translateLibre(text, sl, tl, ep, key);
+  }
+  if (p === "custom") {
+    if (!ep) { return Promise.reject(endpointError("CUSTOM_NOT_SET", "custom endpoint not set")); }
+    if (!isHttpUrl(ep)) {
+      return Promise.reject(endpointError("INVALID_ENDPOINT", "invalid endpoint URL"));
+    }
+    return translateLibre(text, sl, tl, ep, key);
+  }
   return Promise.reject(new Error("Unknown provider: " + p));
 }
 
-browser.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+// ---------- Messaging ----------
+
+api.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   if (!message || message.type !== "TRANSLATE_WORD") { return undefined; }
 
-  getSettings()
-    .then(function(settings) { return translateText(message.text, settings); })
-    .then(function(result) {
-      sendResponse({ ok: true, translatedText: result.translatedText, detectedLang: result.detectedLang });
-    })
-    .catch(function(err) {
-      sendResponse({ ok: false, error: err.message || String(err) });
+  getSettings().then(function(settings) {
+    var key = cacheKey(settings, message.text);
+    var hit = cacheGet(key);
+    var work = hit
+      ? Promise.resolve(hit)
+      : translateText(message.text, settings).then(function(result) {
+          cachePut(key, result);
+          return result;
+        });
+
+    return work.then(function(result) {
+      var response = { ok: true, translatedText: result.translatedText };
+      if (settings.sourceLang === "auto" && result.detectedLang) {
+        response.detectedLang = result.detectedLang;
+        response.targetLang = settings.targetLang;
+      }
+      sendResponse(response);
     });
+  }).catch(function(err) {
+    sendResponse({ ok: false, error: err.message || String(err), code: err.code || "" });
+  });
 
   return true;
 });

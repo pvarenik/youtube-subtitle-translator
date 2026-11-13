@@ -1,9 +1,25 @@
-// content.js - Firefox MV2, ASCII only, no async/await
+// content.js - Firefox/Chrome MV3 content script, ASCII only, no async/await
 
 (function () {
+  var api = (typeof browser !== "undefined") ? browser : chrome;
+
   var PROCESSED_ATTR = "data-ytst-processed";
+  var AUTO_HIDE_MS = 12000;
+  var PROCESS_DEBOUNCE_MS = 150;
+
+  // Edge punctuation/quote chars stripped from a clicked word, in any script.
+  // \p{M} keeps combining marks (Indic matras, harakat, Thai/Sinhala marks)
+  // that attach to word edges.
+  var EDGE_TRIM_RE = /^[^\p{L}\p{N}\p{M}]+|[^\p{L}\p{N}\p{M}]+$/gu;
+
+  // Ideographs and kana: each character becomes its own clickable word.
+  var CJK_RE = /[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+  var CJK_PUNCT_RE = /[\u3000-\u303f\uff01-\uff0f\uff1a\u30fb\u3001\u3002\uff01\uff1f\uff1a\uff1b]/;
+
   var tooltipEl = null;
   var currentRequestId = 0;
+  var hideTimer = null;
+  var processTimer = null;
 
   // ---------- Tooltip ----------
 
@@ -16,13 +32,36 @@
     return tooltipEl;
   }
 
+  function clearAutoHide() {
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
   function hideTooltip() {
+    clearAutoHide();
     if (tooltipEl) { tooltipEl.classList.add("ytst-hidden"); }
   }
 
-  function showTooltip(targetEl, text, isError) {
+  function setAutoHide() {
+    clearAutoHide();
+    hideTimer = setTimeout(hideTooltip, AUTO_HIDE_MS);
+  }
+
+  function showTooltip(targetEl, text, isError, chip) {
     var tooltip = ensureTooltip();
-    tooltip.textContent = text;
+
+    while (tooltip.firstChild) { tooltip.removeChild(tooltip.firstChild); }
+    var line = document.createElement("div");
+    line.className = "ytst-text";
+    line.textContent = text;
+    tooltip.appendChild(line);
+
+    if (!isError && chip) {
+      var chipEl = document.createElement("div");
+      chipEl.className = "ytst-chip";
+      chipEl.textContent = chip;
+      tooltip.appendChild(chipEl);
+    }
+
     if (isError) {
       tooltip.classList.add("ytst-error");
     } else {
@@ -43,58 +82,72 @@
     tooltip.style.top = top + "px";
     tooltip.style.left = left + "px";
     tooltip.style.visibility = "";
+    setAutoHide();
   }
 
   // ---------- Word click ----------
 
   function cleanWord(raw) {
-    return raw.replace(/^[^\w\u00C0-\u024F\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF]+|[^\w\u00C0-\u024F\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF]+$/g, "");
+    return raw.replace(EDGE_TRIM_RE, "");
   }
 
-  function handleWordClick(evt) {
+  function handleWordClick(evt, span) {
     // Do NOT stopPropagation - let YouTube receive its own events
     evt.preventDefault();
-    var span = evt.currentTarget;
     var word = cleanWord(span.textContent || "");
     if (!word) { return; }
 
     var myId = ++currentRequestId;
-    showTooltip(span, "...", false);
+    showTooltip(span, "...", false, "");
 
-    browser.runtime.sendMessage({ type: "TRANSLATE_WORD", text: word })
+    api.runtime.sendMessage({ type: "TRANSLATE_WORD", text: word })
       .then(function(response) {
         if (myId !== currentRequestId) { return; }
         if (!response || !response.ok) {
-          showTooltip(span, "Error: " + ((response && response.error) || "no response"), true);
+          var msg = (response && response.error) || "no response";
+          if (response && response.code === "INVALID_ENDPOINT") { msg = "invalid endpoint URL"; }
+          else if (response && response.code === "CUSTOM_NOT_SET") { msg = "custom endpoint not set"; }
+          showTooltip(span, "Error: " + msg, true, "");
           return;
         }
-        showTooltip(span, response.translatedText || "(empty)", false);
+        var chip = "";
+        if (response.detectedLang && response.targetLang) {
+          chip = response.detectedLang.toUpperCase() + " \u2192 " + response.targetLang.toUpperCase();
+        }
+        showTooltip(span, response.translatedText || "(empty)", false, chip);
       })
       .catch(function(err) {
         if (myId !== currentRequestId) { return; }
-        showTooltip(span, "Error: " + (err.message || String(err)), true);
+        showTooltip(span, "Error: " + (err.message || String(err)), true, "");
       });
   }
 
   // ---------- Segment wrapping ----------
 
-  function getSegmentText(segmentEl) {
-    // Collect text from direct text nodes and our own ytst-word spans only,
-    // ignoring any other nested elements YouTube may add.
-    var text = "";
-    var nodes = segmentEl.childNodes;
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i];
-      if (n.nodeType === 3) { // Text node
-        text += n.nodeValue;
-      } else if (n.nodeType === 1 && n.classList && n.classList.contains("ytst-word")) {
-        text += n.textContent;
-      } else if (n.nodeType === 1) {
-        // Some YouTube span wrappers - grab their text too
-        text += n.textContent;
+  function splitToken(token, out) {
+    if (!CJK_RE.test(token)) {
+      out.push(token);
+      return;
+    }
+    var chars = Array.from(token);
+    var buf = "";
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i];
+      if (CJK_RE.test(ch)) {
+        if (buf) { out.push(buf); buf = ""; }
+        var tok = ch;
+        // Attach CJK punctuation (.,、。) to the preceding character so it
+        // does not become a separate unclickable-looking span.
+        while (i + 1 < chars.length && CJK_PUNCT_RE.test(chars[i + 1])) {
+          i++;
+          tok += chars[i];
+        }
+        out.push(tok);
+      } else {
+        buf += ch;
       }
     }
-    return text;
+    if (buf) { out.push(buf); }
   }
 
   function wrapSegment(segmentEl) {
@@ -108,18 +161,28 @@
     segmentEl.setAttribute(PROCESSED_ATTR, currentText);
     segmentEl.innerHTML = "";
 
-    var parts = currentText.split(/(\s+)/);
-    for (var i = 0; i < parts.length; i++) {
-      var part = parts[i];
-      if (!part) { continue; }
-      if (/^\s+$/.test(part)) {
-        segmentEl.appendChild(document.createTextNode(part));
+    var wsParts = currentText.split(/(\s+)/);
+    var tokens = [];
+    for (var p = 0; p < wsParts.length; p++) {
+      var wsPart = wsParts[p];
+      if (!wsPart) { continue; }
+      if (/^\s+$/.test(wsPart)) {
+        tokens.push(wsPart);
+      } else {
+        splitToken(wsPart, tokens);
+      }
+    }
+
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i];
+      if (!token) { continue; }
+      if (/^\s+$/.test(token)) {
+        segmentEl.appendChild(document.createTextNode(token));
         continue;
       }
       var span = document.createElement("span");
       span.className = "ytst-word";
-      span.textContent = part;
-      span.addEventListener("click", handleWordClick);
+      span.textContent = token;
       segmentEl.appendChild(span);
     }
   }
@@ -129,6 +192,14 @@
     // wrapSegment() itself checks if re-processing is needed.
     var segments = document.querySelectorAll(".ytp-caption-segment");
     for (var i = 0; i < segments.length; i++) { wrapSegment(segments[i]); }
+  }
+
+  function scheduleProcess() {
+    if (processTimer) { return; }
+    processTimer = setTimeout(function() {
+      processTimer = null;
+      processSubtitles();
+    }, PROCESS_DEBOUNCE_MS);
   }
 
   // ---------- Init ----------
@@ -148,7 +219,7 @@
           break;
         }
       }
-      if (needsProcess) { processSubtitles(); }
+      if (needsProcess) { scheduleProcess(); }
     });
 
     observer.observe(document.documentElement, {
@@ -157,14 +228,20 @@
       characterData: true
     });
 
-    // Hide tooltip on click outside or scroll
+    // Delegated word clicks + hide tooltip on click outside, scroll, or Escape
     document.addEventListener("click", function(evt) {
       var t = evt.target;
-      if (tooltipEl &&
-          !tooltipEl.contains(t) &&
-          !(t.classList && t.classList.contains("ytst-word"))) {
+      var span = (t && t.closest) ? t.closest(".ytst-word") : null;
+      if (span) {
+        handleWordClick(evt, span);
+        return;
+      }
+      if (tooltipEl && !tooltipEl.contains(t)) {
         hideTooltip();
       }
+    });
+    document.addEventListener("keydown", function(evt) {
+      if (evt.key === "Escape") { hideTooltip(); }
     });
     document.addEventListener("scroll", hideTooltip, true);
     window.addEventListener("yt-navigate-start", hideTooltip);

@@ -1,5 +1,7 @@
 // options.js - ASCII only, no async/await. Loads i18n from i18n.json.
 
+var api = (typeof browser !== "undefined") ? browser : chrome;
+
 var SOURCE_LANG_CODES = ["auto","en","ru","de","fr","es","it","pt","pl","uk","tr","zh","ja","ko","ar"];
 var TARGET_LANG_CODES = ["en","ru","de","fr","es","it","pt","pl","uk","tr","zh","ja","ko","ar"];
 var PROVIDER_CODES    = ["google","deepl","deepl-pro","libretranslate","custom"];
@@ -35,6 +37,7 @@ var els = {
   customEndpoint: document.getElementById("customEndpoint"),
   apiKeyField:    document.getElementById("apiKeyField"),
   endpointField:  document.getElementById("endpointField"),
+  testBtn:        document.getElementById("testBtn"),
   statusMsg:      document.getElementById("statusMsg"),
   langBtns:       document.querySelectorAll(".lang-btn")
 };
@@ -68,7 +71,7 @@ function applyLang(lang) {
   els.apikeyHint.textContent     = t.apikeyHint;
   els.apiKey.placeholder         = t.apikeyPlaceholder;
   els.endpointLbl.textContent    = t.endpointLabel;
-  els.endpointHint.textContent   = t.endpointHint;
+  els.testBtn.textContent        = t.testLabel;
   document.documentElement.lang  = lang;
 
   rebuildSelect(els.sourceLang, SOURCE_LANG_CODES, t.langNames);
@@ -100,29 +103,54 @@ function nudgePopupResize() {
 
 function updateVisibility() {
   var p = els.provider.value;
+  var t = I18N[currentLang];
   var showKey = (p === "deepl" || p === "deepl-pro" || p === "libretranslate" || p === "custom");
-  var showEp  = (p === "custom");
+  var showEp  = (p === "custom" || p === "libretranslate");
   els.apiKeyField.style.display   = showKey ? "" : "none";
   els.endpointField.style.display = showEp  ? "" : "none";
+  if (t) {
+    els.endpointHint.textContent = (p === "libretranslate") ? t.endpointHintLibre : t.endpointHint;
+  }
   nudgePopupResize();
 }
 
-function showSavedStatus() {
-  var t = I18N[currentLang];
-  els.statusMsg.textContent = t ? t.saved : "Saved!";
-  setTimeout(function() { els.statusMsg.textContent = ""; }, 2000);
+// ---------- Status messages ----------
+
+var statusTimer = null;
+
+// hold=true keeps a status (e.g. "Testing...") until a terminal status replaces it.
+function showStatus(text, isError, hold) {
+  if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+  els.statusMsg.textContent = text;
+  els.statusMsg.classList.toggle("status-error", !!isError);
+  if (text && !hold) {
+    statusTimer = setTimeout(function() {
+      els.statusMsg.textContent = "";
+      els.statusMsg.classList.remove("status-error");
+      statusTimer = null;
+    }, isError ? 8000 : 3000);
+  }
 }
 
-function persistSettings() {
-  var s = {
+// ---------- Settings ----------
+
+function collectSettings() {
+  return {
     sourceLang:     els.sourceLang.value,
     targetLang:     els.targetLang.value,
     provider:       els.provider.value,
     apiKey:         els.apiKey.value.trim(),
-    customEndpoint: els.customEndpoint.value.trim(),
-    uiLang:         currentLang
+    customEndpoint: els.customEndpoint.value.trim()
   };
-  browser.storage.sync.set(s).then(showSavedStatus);
+}
+
+function persistSettings() {
+  var s = collectSettings();
+  s.uiLang = currentLang;
+  api.storage.sync.set(s).then(function() {
+    var t = I18N[currentLang];
+    showStatus(t ? t.saved : "Saved!", false);
+  });
 }
 
 var saveDebounceTimer = null;
@@ -130,6 +158,113 @@ function persistSettingsDebounced() {
   if (saveDebounceTimer) { clearTimeout(saveDebounceTimer); }
   saveDebounceTimer = setTimeout(persistSettings, 500);
 }
+
+// Cancel a pending debounced save so its "Saved!" status cannot overwrite
+// a test result or permission error shown later by the same user edit.
+function cancelPendingSave() {
+  if (saveDebounceTimer) { clearTimeout(saveDebounceTimer); saveDebounceTimer = null; }
+}
+
+// ---------- Optional host permission for self-hosted endpoints ----------
+
+function endpointOrigin(urlStr) {
+  var ep = (urlStr || "").trim();
+  if (!ep || !/^https?:\/\//i.test(ep)) { return null; }
+  try {
+    var u = new URL(ep);
+    return u.origin + "/*";
+  } catch (e) {
+    return null;
+  }
+}
+
+function needsEndpointPermission(provider) {
+  return provider === "libretranslate" || provider === "custom";
+}
+
+// Must be called from a user-gesture handler (click / change).
+function ensureEndpointPermission(urlStr) {
+  var origin = endpointOrigin(urlStr);
+  if (!origin) { return Promise.resolve(true); }
+  return api.permissions.contains({ origins: [origin] }).then(function(has) {
+    if (has) { return true; }
+    return api.permissions.request({ origins: [origin] });
+  }).catch(function() {
+    return false;
+  });
+}
+
+// Returns false and shows a localized status when the endpoint is malformed.
+function validateEndpointInput() {
+  var ep = els.customEndpoint.value.trim();
+  if (ep && !endpointOrigin(ep)) {
+    var t = I18N[currentLang];
+    showStatus((t && t.invalidEndpoint) || "Invalid endpoint URL.", true);
+    return false;
+  }
+  return true;
+}
+
+// Map background error codes to localized status text.
+function errorStatus(code, rawError) {
+  var t = I18N[currentLang] || {};
+  if (code === "INVALID_ENDPOINT") { showStatus(t.invalidEndpoint || "Invalid endpoint URL.", true); return; }
+  if (code === "CUSTOM_NOT_SET")   { showStatus(t.customNotSet || "Custom endpoint is not configured.", true); return; }
+  showStatus("Error: " + (rawError || "no response"), true);
+}
+
+function tryEndpointPermission() {
+  if (!needsEndpointPermission(els.provider.value)) { return; }
+  cancelPendingSave();
+  if (!validateEndpointInput()) { return; }
+  ensureEndpointPermission(els.customEndpoint.value.trim()).then(function(granted) {
+    if (!granted) {
+      var t = I18N[currentLang];
+      showStatus(t ? t.permDenied : "Access was not granted.", true);
+    }
+  });
+}
+
+// ---------- Test connection ----------
+
+function runTest() {
+  var t = I18N[currentLang];
+  cancelPendingSave();
+
+  var s = collectSettings();
+  s.uiLang = currentLang;
+
+  if (needsEndpointPermission(s.provider) && !validateEndpointInput()) { return; }
+  showStatus(t ? t.testing : "Testing...", false, true);
+
+  var perm = needsEndpointPermission(s.provider)
+    ? ensureEndpointPermission(s.customEndpoint)
+    : Promise.resolve(true);
+
+  perm
+    .then(function(granted) {
+      if (!granted) {
+        showStatus(t ? t.permDenied : "Access was not granted.", true);
+        return "denied";
+      }
+      return api.storage.sync.set(s).then(function() {
+        return api.runtime.sendMessage({ type: "TRANSLATE_WORD", text: "hello world" });
+      });
+    })
+    .then(function(response) {
+      if (response === "denied") { return; }
+      if (!response || !response.ok) {
+        errorStatus((response && response.code) || "", (response && response.error) || "");
+        return;
+      }
+      showStatus((t ? t.testOk + " " : "OK: ") + (response.translatedText || "(empty)"), false);
+    })
+    .catch(function(err) {
+      showStatus("Error: " + (err.message || String(err)), true);
+    });
+}
+
+// ---------- Init ----------
 
 function init(settings) {
   els.sourceLang.value     = settings.sourceLang;
@@ -148,9 +283,16 @@ function init(settings) {
   els.provider.addEventListener("change", function() {
     updateVisibility();
     persistSettings();
+    tryEndpointPermission();
   });
   els.apiKey.addEventListener("input", persistSettingsDebounced);
   els.customEndpoint.addEventListener("input", persistSettingsDebounced);
+  els.customEndpoint.addEventListener("change", function() {
+    persistSettings();
+    tryEndpointPermission();
+  });
+
+  els.testBtn.addEventListener("click", runTest);
 
   for (var i = 0; i < els.langBtns.length; i++) {
     (function(btn) {
@@ -164,11 +306,11 @@ function init(settings) {
 }
 
 // Load i18n first, then settings
-fetch(browser.runtime.getURL("options/i18n.json"))
+fetch(api.runtime.getURL("options/i18n.json"))
   .then(function(r) { return r.json(); })
   .then(function(data) {
     I18N = data;
-    return browser.storage.sync.get(DEFAULT_SETTINGS);
+    return api.storage.sync.get(DEFAULT_SETTINGS);
   })
   .then(function(stored) {
     init(Object.assign({}, DEFAULT_SETTINGS, stored));
