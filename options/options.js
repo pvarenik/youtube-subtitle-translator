@@ -6,17 +6,66 @@ var SOURCE_LANG_CODES = ["auto","bg","cs","da","de","el","en","es","et","fi","fr
 var TARGET_LANG_CODES = ["bg","cs","da","de","el","en-gb","en-us","es","et","fi","fr","hu","id","it","ja","ko","lt","lv","nb","nl","pl","pt-br","pt-pt","ro","ru","sk","sl","sv","tr","uk","zh-hans","zh-hant"];
 var PROVIDER_CODES    = ["google","deepl","deepl-pro","libretranslate","custom"];
 
+// UI languages: DeepL supported languages (main codes only, no regional variants)
+// Sorted: en first, ru second, be third, then alphabetically
+var UI_LANG_CODES = ["en","ru","be","bg","cs","da","de","el","es","et","fi","fr","hu","id","it","ja","ko","lt","lv","nb","nl","pl","pt","ro","sk","sl","sv","tr","uk","zh"];
+
+// Native language names (each language in its own script/language)
+var NATIVE_LANG_NAMES = {
+  "en": "English",
+  "ru": "Русский",
+  "be": "Беларуская",
+  "bg": "Български",
+  "cs": "Čeština",
+  "da": "Dansk",
+  "de": "Deutsch",
+  "el": "Ελληνικά",
+  "es": "Español",
+  "et": "Eesti",
+  "fi": "Suomi",
+  "fr": "Français",
+  "hu": "Magyar",
+  "id": "Bahasa Indonesia",
+  "it": "Italiano",
+  "ja": "日本語",
+  "ko": "한국어",
+  "lt": "Lietuvių",
+  "lv": "Latviešu",
+  "nb": "Norsk (Bokmål)",
+  "nl": "Nederlands",
+  "pl": "Polski",
+  "pt": "Português",
+  "ro": "Română",
+  "sk": "Slovenčina",
+  "sl": "Slovenščina",
+  "sv": "Svenska",
+  "tr": "Türkçe",
+  "uk": "Українська",
+  "zh": "中文"
+};
+
+// Flag emoji mapping for each language code
+var LANG_FLAGS = {
+  "en": "🇺🇸", "ru": "🇷🇺", "be": "🇧🇾", "bg": "🇧🇬", "cs": "🇨🇿", "da": "🇩🇰", "de": "🇩🇪",
+  "el": "🇬🇷", "es": "🇪🇸", "et": "🇪🇪", "fi": "🇫🇮", "fr": "🇫🇷", "hu": "🇭🇺",
+  "id": "🇮🇩", "it": "🇮🇹", "ja": "🇯🇵", "ko": "🇰🇷", "lt": "🇱🇹", "lv": "🇱🇻",
+  "nb": "🇳🇴", "nl": "🇳🇱", "pl": "🇵🇱", "pt": "🇵🇹", "ro": "🇷🇴", "sk": "🇸🇰",
+  "sl": "🇸🇮", "sv": "🇸🇪", "tr": "🇹🇷", "uk": "🇺🇦", "zh": "🇨🇳"
+};
+
 var DEFAULT_SETTINGS = {
   sourceLang: "auto",
   targetLang: "ru",
   provider: "google",
   apiKey: "",
   customEndpoint: "",
-  uiLang: "en"
+  uiLang: "en",
+  theme: "system"
 };
 
 var currentLang = "en";
 var I18N = {};
+var langListOpen = false;
 
 var els = {
   title:          document.getElementById("txt-title"),
@@ -39,7 +88,11 @@ var els = {
   endpointField:  document.getElementById("endpointField"),
   testBtn:        document.getElementById("testBtn"),
   statusMsg:      document.getElementById("statusMsg"),
-  langBtns:       document.querySelectorAll(".lang-btn")
+  langBtn:        document.getElementById("langBtn"),
+  langList:       document.getElementById("langList"),
+  langFlag:       document.getElementById("langFlag"),
+  themeBtn:       document.getElementById("themeBtn"),
+  themeIcon:      document.getElementById("themeIcon")
 };
 
 function rebuildSelect(selectEl, codes, namesMap) {
@@ -78,26 +131,26 @@ function applyLang(lang) {
   rebuildSelect(els.targetLang, TARGET_LANG_CODES, t.langNames);
   rebuildSelect(els.provider,   PROVIDER_CODES,    t.providerNames);
 
-  for (var b = 0; b < els.langBtns.length; b++) {
-    var btn = els.langBtns[b];
-    if (btn.getAttribute("data-lang") === lang) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
+  // Update language dropdown button flag
+  els.langFlag.textContent = LANG_FLAGS[lang] || "🏳️";
+}
+
+function applyTheme(theme) {
+  var root = document.documentElement;
+  if (theme === "system") {
+    root.removeAttribute("data-theme");
+    els.themeIcon.textContent = "🖥";
+  } else {
+    root.setAttribute("data-theme", theme);
+    els.themeIcon.textContent = theme === "dark" ? "🌙" : "☀";
   }
 }
 
 function nudgePopupResize() {
-  // Chrome's toolbar popup only measures its content once, at first paint;
-  // later DOM changes (like the API-key field appearing/disappearing)
-  // don't trigger a resize on their own. Forcing a reflow here makes the
-  // popup window grow/shrink to match. Harmless no-op cost in Firefox,
-  // which already tracks this live.
   var root = document.documentElement;
   var prev = root.style.display;
   root.style.display = "none";
-  void root.offsetHeight; // force layout recalculation
+  void root.offsetHeight;
   root.style.display = prev;
 }
 
@@ -114,11 +167,65 @@ function updateVisibility() {
   nudgePopupResize();
 }
 
+// ---------- Language dropdown ----------
+
+function buildLangList() {
+  els.langList.innerHTML = "";
+  for (var i = 0; i < UI_LANG_CODES.length; i++) {
+    var code = UI_LANG_CODES[i];
+    var name = NATIVE_LANG_NAMES[code] || code;
+    var flag = LANG_FLAGS[code] || "🏳️";
+
+    var li = document.createElement("li");
+    li.setAttribute("role", "option");
+    li.setAttribute("data-lang", code);
+    li.tabIndex = -1;
+
+    var flagSpan = document.createElement("span");
+    flagSpan.className = "flag";
+    flagSpan.textContent = flag;
+    li.appendChild(flagSpan);
+
+    var nameSpan = document.createElement("span");
+    nameSpan.className = "lang-name";
+    nameSpan.textContent = name;
+    li.appendChild(nameSpan);
+
+    if (code === currentLang) {
+      li.classList.add("active");
+      li.setAttribute("aria-selected", "true");
+    }
+    els.langList.appendChild(li);
+  }
+}
+
+function toggleLangList(open) {
+  if (typeof open === "boolean") {
+    langListOpen = open;
+  } else {
+    langListOpen = !langListOpen;
+  }
+  els.langList.hidden = !langListOpen;
+  els.langBtn.setAttribute("aria-expanded", langListOpen);
+  if (langListOpen) {
+    buildLangList();
+    // Focus the active item
+    var active = els.langList.querySelector(".active");
+    if (active) { active.focus(); }
+  }
+}
+
+function selectLang(code) {
+  applyLang(code);
+  toggleLangList(false);
+  updateVisibility();
+  persistSettings();
+}
+
 // ---------- Status messages ----------
 
 var statusTimer = null;
 
-// hold=true keeps a status (e.g. "Testing...") until a terminal status replaces it.
 function showStatus(text, isError, hold) {
   if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
   els.statusMsg.textContent = text;
@@ -147,6 +254,9 @@ function collectSettings() {
 function persistSettings() {
   var s = collectSettings();
   s.uiLang = currentLang;
+  var root = document.documentElement;
+  var theme = root.getAttribute("data-theme") || "system";
+  s.theme = theme;
   api.storage.sync.set(s).then(function() {
     var t = I18N[currentLang];
     showStatus(t ? t.saved : "Saved!", false);
@@ -159,8 +269,6 @@ function persistSettingsDebounced() {
   saveDebounceTimer = setTimeout(persistSettings, 500);
 }
 
-// Cancel a pending debounced save so its "Saved!" status cannot overwrite
-// a test result or permission error shown later by the same user edit.
 function cancelPendingSave() {
   if (saveDebounceTimer) { clearTimeout(saveDebounceTimer); saveDebounceTimer = null; }
 }
@@ -182,7 +290,6 @@ function needsEndpointPermission(provider) {
   return provider === "libretranslate" || provider === "custom";
 }
 
-// Must be called from a user-gesture handler (click / change).
 function ensureEndpointPermission(urlStr) {
   var origin = endpointOrigin(urlStr);
   if (!origin) { return Promise.resolve(true); }
@@ -194,7 +301,6 @@ function ensureEndpointPermission(urlStr) {
   });
 }
 
-// Returns false and shows a localized status when the endpoint is malformed.
 function validateEndpointInput() {
   var ep = els.customEndpoint.value.trim();
   if (ep && !endpointOrigin(ep)) {
@@ -205,7 +311,6 @@ function validateEndpointInput() {
   return true;
 }
 
-// Map background error codes to localized status text.
 function errorStatus(code, rawError) {
   var t = I18N[currentLang] || {};
   if (code === "INVALID_ENDPOINT") { showStatus(t.invalidEndpoint || "Invalid endpoint URL.", true); return; }
@@ -274,10 +379,9 @@ function init(settings) {
   els.customEndpoint.value = settings.customEndpoint;
 
   applyLang(settings.uiLang || "en");
+  applyTheme(settings.theme || "system");
   updateVisibility();
 
-  // Settings save automatically as they change - selects save right away,
-  // text inputs are debounced so we don't hit storage on every keystroke.
   els.sourceLang.addEventListener("change", persistSettings);
   els.targetLang.addEventListener("change", persistSettings);
   els.provider.addEventListener("change", function() {
@@ -294,15 +398,55 @@ function init(settings) {
 
   els.testBtn.addEventListener("click", runTest);
 
-  for (var i = 0; i < els.langBtns.length; i++) {
-    (function(btn) {
-      btn.addEventListener("click", function() {
-        applyLang(btn.getAttribute("data-lang"));
-        updateVisibility();
-        persistSettings();
-      });
-    })(els.langBtns[i]);
-  }
+  // Theme toggle
+  els.themeBtn.addEventListener("click", function() {
+    var root = document.documentElement;
+    var current = root.getAttribute("data-theme") || "system";
+    var next = current === "system" ? "light" : (current === "light" ? "dark" : "system");
+    applyTheme(next);
+    persistSettings();
+  });
+
+  // Language dropdown
+  els.langBtn.addEventListener("click", function() {
+    toggleLangList();
+  });
+
+  els.langList.addEventListener("click", function(evt) {
+    var li = evt.target.closest("li[data-lang]");
+    if (li) { selectLang(li.getAttribute("data-lang")); }
+  });
+
+  els.langList.addEventListener("keydown", function(evt) {
+    var items = Array.from(els.langList.querySelectorAll("li[data-lang]"));
+    var activeIdx = items.findIndex(function(li) { return li.classList.contains("active"); });
+    if (evt.key === "ArrowDown") {
+      evt.preventDefault();
+      var next = (activeIdx + 1) % items.length;
+      items[next].focus();
+      items[next].classList.add("active");
+      if (activeIdx >= 0) { items[activeIdx].classList.remove("active"); }
+    } else if (evt.key === "ArrowUp") {
+      evt.preventDefault();
+      var prev = (activeIdx - 1 + items.length) % items.length;
+      items[prev].focus();
+      items[prev].classList.add("active");
+      if (activeIdx >= 0) { items[activeIdx].classList.remove("active"); }
+    } else if (evt.key === "Enter" || evt.key === " ") {
+      evt.preventDefault();
+      var active = els.langList.querySelector(".active");
+      if (active) { selectLang(active.getAttribute("data-lang")); }
+    } else if (evt.key === "Escape") {
+      toggleLangList(false);
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", function(evt) {
+    if (langListOpen && !els.langBtn.contains(evt.target) && !els.langList.contains(evt.target)) {
+      toggleLangList(false);
+    }
+  });
 }
 
 // Load i18n first, then settings

@@ -1,16 +1,51 @@
 * { box-sizing: border-box; }
 
+:root {
+  --bg: #f5f5f7;
+  --card-bg: #fff;
+  --text: #1a1a1a;
+  --text-muted: #777;
+  --border: #ccc;
+  --btn-bg: #fff;
+  --btn-hover: #f0f0f2;
+  --btn-active: #e4e4e8;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --switcher-bg: #e0e0e0;
+  --switcher-active-bg: #fff;
+  --hint-color: #777;
+  --status-ok: #2e7d32;
+  --status-error: #b3261e;
+  --help-bg: #fff;
+  --help-hover: #cc0000;
+}
+
+[data-theme="dark"] {
+  --bg: #1f1f1f;
+  --card-bg: #2d2d2d;
+  --text: #e8eaed;
+  --text-muted: #9aa0a6;
+  --border: #3c4043;
+  --btn-bg: #3c4043;
+  --btn-hover: #484d52;
+  --btn-active: #50555a;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --switcher-bg: #3c4043;
+  --switcher-active-bg: #2d2d2d;
+  --hint-color: #9aa0a6;
+  --status-ok: #81c995;
+  --status-error: #f28b82;
+  --help-bg: #2d2d2d;
+  --help-hover: #f28b82;
+}
+
 body {
   font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  background: #f5f5f7;
+  background: var(--bg);
   margin: 0 auto;
   padding: 24px;
-  color: #1a1a1a;
-  /* Chrome and Firefox size the browser-action popup differently when
-     width is left implicit (Chrome tends to shrink-wrap narrower).
-     A fixed width makes both browsers render identically, and margin:
-     0 auto still centers the panel when the page opens in a full tab. */
+  color: var(--text);
   width: 480px;
+  transition: background 0.2s, color 0.2s;
 }
 
 main {
@@ -25,6 +60,13 @@ main {
   gap: 12px;
 }
 
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 h1 {
   font-size: 20px;
   margin: 0;
@@ -34,57 +76,134 @@ h1 {
 h2 {
   font-size: 15px;
   margin: 0 0 12px;
-  color: #333;
+  color: var(--text-muted);
 }
 
-/* --- Language switcher --- */
+/* --- Language dropdown --- */
 .lang-switcher {
-  display: flex;
-  gap: 4px;
-  background: #e0e0e0;
-  border-radius: 8px;
-  padding: 3px;
-  flex-shrink: 0;
+  position: relative;
 }
 
 .lang-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 6px 10px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 8px;
+  background: var(--switcher-bg);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: #555;
-  transition: background 0.15s, color 0.15s;
+  font-size: 16px;
   line-height: 1;
+  color: var(--text);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.lang-btn:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .lang-btn .flag {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
 }
 
-.lang-btn.active {
-  background: #fff;
-  color: #1a1a1a;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+.lang-btn .caret {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 2px;
 }
 
-.lang-btn:hover:not(.active) {
-  background: rgba(255,255,255,0.5);
+.lang-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  min-width: 180px;
+  z-index: 10;
+}
+
+.lang-list[hidden] {
+  display: none;
+}
+
+.lang-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.lang-list li:hover,
+.lang-list li:focus {
+  background: var(--btn-hover);
+  outline: none;
+}
+
+.lang-list li.active {
+  background: var(--switcher-bg);
+  font-weight: 600;
+}
+
+.lang-list .flag {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.lang-list .lang-name {
+  flex: 1;
+  text-align: left;
+}
+
+/* --- Theme button --- */
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: var(--switcher-bg);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.theme-btn:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.theme-btn:focus {
+  outline: 2px solid var(--border);
+  outline-offset: 2px;
 }
 
 /* --- Cards --- */
 .card {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 16px 18px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow);
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .field {
@@ -101,6 +220,7 @@ h2 {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 6px;
+  color: var(--text);
 }
 
 select,
@@ -109,14 +229,30 @@ input[type="password"] {
   width: 100%;
   padding: 8px 10px;
   font-size: 14px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--card-bg);
+  color: var(--text);
+  transition: border-color 0.15s, background 0.2s;
+}
+
+select:hover,
+input[type="text"]:hover,
+input[type="password"]:hover {
+  border-color: #999;
+}
+
+select:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66,133,244,0.2);
 }
 
 .hint {
   font-size: 12px;
-  color: #777;
+  color: var(--hint-color);
   margin: 6px 0 0;
   line-height: 1.4;
 }
@@ -131,30 +267,30 @@ input[type="password"] {
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--btn-bg);
+  color: var(--text);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .btn:hover {
-  background: #f0f0f2;
-  border-color: #bbb;
+  background: var(--btn-hover);
+  border-color: #999;
 }
 
 .btn:active {
-  background: #e4e4e8;
+  background: var(--btn-active);
 }
 
 .status {
   font-size: 13px;
-  color: #2e7d32;
+  color: var(--status-ok);
 }
 
 .status.status-error {
-  color: #b3261e;
+  color: var(--status-error);
 }
 
 .help-link {
@@ -167,8 +303,8 @@ input[type="password"] {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #fff;
-  color: #555;
+  background: var(--help-bg);
+  color: var(--text-muted);
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
@@ -177,6 +313,21 @@ input[type="password"] {
 }
 
 .help-link:hover {
-  background: #cc0000;
+  background: var(--help-hover);
   color: #fff;
+}
+
+/* Dark mode scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
