@@ -12,9 +12,11 @@
   // that attach to word edges.
   var EDGE_TRIM_RE = /^[^\p{L}\p{N}\p{M}]+|[^\p{L}\p{N}\p{M}]+$/gu;
 
-  // Ideographs and kana: each character becomes its own clickable word.
-  var CJK_RE = /[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
-  var CJK_PUNCT_RE = /[\u3000-\u303f\uff01-\uff0f\uff1a\u30fb\u3001\u3002\uff01\uff1f\uff1a\uff1b]/;
+// Ideographs and kana: each character becomes its own clickable word.
+// Use Unicode Script property for comprehensive CJK coverage.
+// Firefox 78+, Chrome 87+, Safari 14+ support \p{Script=...}
+var CJK_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+var CJK_PUNCT_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{General_Category=Po}\p{General_Category=Pd}\p{General_Category=Ps}\p{General_Category=Pe}\p{General_Category=Pi}\p{General_Category=Pf}]/u;
 
   var tooltipEl = null;
   var currentRequestId = 0;

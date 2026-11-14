@@ -2,8 +2,8 @@
 
 var api = (typeof browser !== "undefined") ? browser : chrome;
 
-var SOURCE_LANG_CODES = ["auto","en","ru","de","fr","es","it","pt","pl","uk","tr","zh","ja","ko","ar"];
-var TARGET_LANG_CODES = ["en","ru","de","fr","es","it","pt","pl","uk","tr","zh","ja","ko","ar"];
+var SOURCE_LANG_CODES = ["auto","bg","cs","da","de","el","en","es","et","fi","fr","hu","id","it","ja","ko","lt","lv","nb","nl","pl","pt","ro","ru","sk","sl","sv","tr","uk","zh"];
+var TARGET_LANG_CODES = ["bg","cs","da","de","el","en-gb","en-us","es","et","fi","fr","hu","id","it","ja","ko","lt","lv","nb","nl","pl","pt-br","pt-pt","ro","ru","sk","sl","sv","tr","uk","zh-hans","zh-hant"];
 var PROVIDER_CODES    = ["google","deepl","deepl-pro","libretranslate","custom"];
 
 var DEFAULT_SETTINGS = {

@@ -42,3 +42,22 @@
   font-size: 11px;
   opacity: 0.65;
 }
+
+@media (prefers-color-scheme: dark) {
+  .ytst-word:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  #ytst-tooltip {
+    background: #202124;
+    color: #e8eaed;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  }
+  #ytst-tooltip.ytst-error {
+    background: #3c1e1e;
+    color: #f28b82;
+  }
+  .ytst-chip {
+    background: #3c4043;
+    color: #8ab4f8;
+  }
+}

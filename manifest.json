@@ -13,6 +13,8 @@
   ],
   "host_permissions": [
     "https://*.youtube.com/*",
+    "https://music.youtube.com/*",
+    "https://tv.youtube.com/*",
     "https://translate.googleapis.com/*",
     "https://api-free.deepl.com/*",
     "https://api.deepl.com/*",
@@ -34,15 +36,14 @@
     "open_in_tab": true
   },
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "background.js"
-    ]
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/*"
+        "https://*.youtube.com/*",
+        "https://music.youtube.com/*",
+        "https://tv.youtube.com/*"
       ],
       "js": [
         "content.js"

@@ -2,6 +2,14 @@
 
 var api = (typeof browser !== "undefined") ? browser : chrome;
 
+if (typeof AbortSignal.timeout !== "function") {
+  AbortSignal.timeout = function(ms) {
+    var controller = new AbortController();
+    setTimeout(function() { controller.abort(); }, ms);
+    return controller.signal;
+  };
+}
+
 var DEFAULT_SETTINGS = {
   sourceLang: "auto",
   targetLang: "ru",
@@ -44,6 +52,10 @@ function cachePut(key, value) {
     cache.delete(oldest);
   }
 }
+
+api.storage.onChanged.addListener(function(changes, area) {
+  if (area === "sync") { cache.clear(); }
+});
 
 // ---------- Fetch with timeout ----------
 
