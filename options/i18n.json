@@ -20,6 +20,7 @@
     "invalidEndpoint": "Invalid endpoint URL - it must start with http:// or https://.",
     "customNotSet": "Custom endpoint is not configured. Enter your server URL first.",
     "saved": "Saved!",
+    "loaded": "Loaded",
     "langNames": {
       "auto": "Auto-detect",
       "bg": "Bulgarian",
@@ -49,7 +50,7 @@
       "pt-pt": "Portuguese (Portugal)",
       "ro": "Romanian",
       "ru": "Russian",
-      "be": "Belarussian",
+      "be": "Belarusian",
       "sk": "Slovak",
       "sl": "Slovenian",
       "sv": "Swedish",
@@ -65,8 +66,7 @@
       "deepl-pro": "DeepL Pro (API key required)",
       "libretranslate": "LibreTranslate",
       "custom": "Custom endpoint"
-    },
-    "loaded": "Loaded"
+    }
   },
   "ru": {
     "title": "YouTube Subtitle Translator",
@@ -89,6 +89,7 @@
     "invalidEndpoint": "Недопустимый URL эндпоинта - он должен начинаться с http:// или https://.",
     "customNotSet": "Свой эндпоинт не настроен. Сначала укажите адрес вашего сервера.",
     "saved": "Сохранено ✓",
+    "loaded": "Загружено",
     "langNames": {
       "auto": "Автоопределение",
       "bg": "Болгарский",
@@ -126,7 +127,7 @@
       "zh": "Китайский",
       "zh-hans": "Китайский (упрощённый)",
       "zh-hant": "Китайский (традиционный)",
-      "be": "белорусский"
+      "be": "Беларуский"
     },
     "providerNames": {
       "google": "Google Translate (без ключа)",
@@ -134,8 +135,7 @@
       "deepl-pro": "DeepL Pro (нужен ключ)",
       "libretranslate": "LibreTranslate",
       "custom": "Свой эндпоинт"
-    },
-    "loaded": "Загружено"
+    }
   },
   "bg": {
     "title": "YouTube Subtitle Translator",
@@ -158,6 +158,7 @@
     "invalidEndpoint": "Невалиден URL адрес на крайната точка – той трябва да започва с http:// или https://.",
     "customNotSet": "Потребителският краен пункт не е конфигуриран. Първо въведете URL адреса на сървъра си.",
     "saved": "Запазено!",
+    "loaded": "Заредено",
     "langNames": {
       "auto": "Автоматично разпознаване",
       "bg": "Български",
@@ -181,7 +182,7 @@
       "lv": "Latviešu",
       "nb": "Norsk (Bokmål)",
       "nl": "Nederlands",
-      "pl": "Polski",
+      "pl": "Полски",
       "pt": "Português",
       "pt-br": "Português (Brasil)",
       "pt-pt": "Português (Portugal)",
@@ -226,6 +227,7 @@
     "invalidEndpoint": "Neplatná adresa URL koncového bodu – musí začínat http:// nebo https://.",
     "customNotSet": "Vlastní koncový bod není nakonfigurován. Nejprve zadejte adresu URL svého serveru.",
     "saved": "Uloženo!",
+    "loaded": "Načteno",
     "langNames": {
       "auto": "Automatická detekce",
       "bg": "bulharština",
@@ -249,7 +251,7 @@
       "lv": "lotyšština",
       "nb": "norština (bokmål)",
       "nl": "nizozemština",
-      "pl": "polština",
+      "pl": "Polština",
       "pt": "portugalština",
       "pt-br": "portugalština (Brazílie)",
       "pt-pt": "portugalština (Portugalsko)",
@@ -294,6 +296,7 @@
     "invalidEndpoint": "Ugyldig URL til slutpunkt – den skal begynde med http:// eller https://.",
     "customNotSet": "Det brugerdefinerede endpoint er ikke konfigureret. Indtast først din server-URL.",
     "saved": "Gemt!",
+    "loaded": "Indlæst",
     "langNames": {
       "auto": "Automatisk genkendelse",
       "bg": "bulgarsk",
@@ -362,6 +365,7 @@
     "invalidEndpoint": "Ungültige Endpunkt-URL – sie muss mit http:// oder https:// beginnen.",
     "customNotSet": "Der benutzerdefinierte Endpunkt ist nicht konfiguriert. Geben Sie zunächst die URL Ihres Servers ein.",
     "saved": "Gespeichert!",
+    "loaded": "Geladen",
     "langNames": {
       "auto": "Auto-Erkennung",
       "bg": "Bulgarisch",
@@ -430,6 +434,7 @@
     "invalidEndpoint": "Μη έγκυρη διεύθυνση URL τελικού σημείου — πρέπει να ξεκινά με http:// ή https://.",
     "customNotSet": "Το προσαρμοσμένο σημείο τερματισμού δεν έχει ρυθμιστεί. Εισάγετε πρώτα τη διεύθυνση URL του διακομιστή σας.",
     "saved": "Αποθηκεύτηκε!",
+    "loaded": "Φορτώθηκε",
     "langNames": {
       "auto": "Αυτόματη ανίχνευση",
       "bg": "Βουλγαρικά",
@@ -498,6 +503,7 @@
     "invalidEndpoint": "URL del punto final no válida: debe comenzar por http:// o https://.",
     "customNotSet": "El punto final personalizado no está configurado. Introduce primero la URL de tu servidor.",
     "saved": "¡Guardado!",
+    "loaded": "Cargado",
     "langNames": {
       "auto": "Detección automática",
       "bg": "Búlgaro",
@@ -566,6 +572,7 @@
     "invalidEndpoint": "Kehtetu sihtpunkti URL – see peab algama http:// või https://.",
     "customNotSet": "Kohandatud lõpppunkti pole konfigureeritud. Sisesta kõigepealt oma serveri URL-aadress.",
     "saved": "Salvestatud!",
+    "loaded": "Laetud",
     "langNames": {
       "auto": "Automaatne tuvastamine",
       "bg": "Bulgaaria",
@@ -634,6 +641,7 @@
     "invalidEndpoint": "Päätepisteen URL-osoite on virheellinen – sen on alettava merkillä http:// tai https://.",
     "customNotSet": "Mukautettua päätepistettä ei ole määritetty. Syötä ensin palvelimesi URL-osoite.",
     "saved": "Tallennettu!",
+    "loaded": "Ladattu",
     "langNames": {
       "auto": "Automaattinen tunnistus",
       "bg": "Bulgaria",
@@ -702,6 +710,7 @@
     "invalidEndpoint": "URL de point de terminaison non valide : elle doit commencer par http:// ou https://.",
     "customNotSet": "Le point de terminaison personnalisé n'est pas configuré. Veuillez d'abord saisir l'URL de votre serveur.",
     "saved": "Enregistré !",
+    "loaded": "Chargé",
     "langNames": {
       "auto": "Détection automatique",
       "bg": "Bulgare",
@@ -770,6 +779,7 @@
     "invalidEndpoint": "Érvénytelen végpont-URL – http:// vagy https:// formában kell kezdődnie.",
     "customNotSet": "Az egyéni végpont nincs beállítva. Először adja meg a szerver URL-címét.",
     "saved": "Elmentve!",
+    "loaded": "Betöltve",
     "langNames": {
       "auto": "Automatikus felismerés",
       "bg": "bolgár",
@@ -838,6 +848,7 @@
     "invalidEndpoint": "URL titik akhir tidak valid — URL tersebut harus diawali dengan http:// atau https://.",
     "customNotSet": "Titik akhir khusus belum dikonfigurasi. Silakan masukkan URL server Anda terlebih dahulu.",
     "saved": "Terselamatkan!",
+    "loaded": "Dimuat",
     "langNames": {
       "auto": "Deteksi otomatis",
       "bg": "Bahasa Bulgaria",
@@ -906,6 +917,7 @@
     "invalidEndpoint": "URL dell'endpoint non valido: deve iniziare con http:// o https://.",
     "customNotSet": "L'endpoint personalizzato non è configurato. Inserisci prima l'URL del tuo server.",
     "saved": "Salvato!",
+    "loaded": "Caricato",
     "langNames": {
       "auto": "Rilevamento automatico",
       "bg": "Bulgaro",
@@ -974,6 +986,7 @@
     "invalidEndpoint": "無効なエンドポイントURLです。URLは「http://」または「https://」で始まる必要があります。",
     "customNotSet": "カスタムエンドポイントが設定されていません。まず、サーバーのURLを入力してください。",
     "saved": "保存されました！",
+    "loaded": "読み込み済み",
     "langNames": {
       "auto": "自動検出",
       "bg": "ブルガリア語",
@@ -1042,6 +1055,7 @@
     "invalidEndpoint": "잘못된 엔드포인트 URL입니다. URL은 http:// 또는 https://로 시작해야 합니다.",
     "customNotSet": "사용자 지정 엔드포인트가 구성되지 않았습니다. 먼저 서버 URL을 입력하십시오.",
     "saved": "저장됨!",
+    "loaded": "로드됨",
     "langNames": {
       "auto": "자동 감지",
       "bg": "불가리아어",
@@ -1079,7 +1093,7 @@
       "zh": "중국어",
       "zh-hans": "중국어 (간체)",
       "zh-hant": "중국어 (번체)",
-      "be": "벨라루스인"
+      "be": "벨라루스어"
     },
     "providerNames": {
       "google": "Google Translate (키 불필요)",
@@ -1110,6 +1124,7 @@
     "invalidEndpoint": "Neteisingas galinio taško URL – jis turi prasidėti nuo http:// arba https://.",
     "customNotSet": "Pasirinktinis galinis taškas nėra sukonfigūruotas. Pirmiausia įveskite savo serverio URL adresą.",
     "saved": "Išsaugota!",
+    "loaded": "Įkelta",
     "langNames": {
       "auto": "Automatinis nustatymas",
       "bg": "Bulgarų",
@@ -1178,6 +1193,7 @@
     "invalidEndpoint": "Nepareiza galapunkta URL — tai jāsākas ar http:// vai https://.",
     "customNotSet": "Pielāgotais galapunkts nav konfigurēts. Vispirms ievadiet sava servera URL.",
     "saved": "Saglabāts!",
+    "loaded": "Ielādēts",
     "langNames": {
       "auto": "Automātiskā noteikšana",
       "bg": "bulgāru",
@@ -1201,7 +1217,7 @@
       "lv": "Latviešu",
       "nb": "Norvēģu (bokmāls)",
       "nl": "holandiešu",
-      "pl": "poļu",
+      "pl": "Poļu",
       "pt": "portugāļu valoda",
       "pt-br": "portugāļu (Brazīlija)",
       "pt-pt": "portugāļu valoda (Portugāle)",
@@ -1246,6 +1262,7 @@
     "invalidEndpoint": "Ugyldig URL for sluttpunkt – den må begynne med http:// eller https://.",
     "customNotSet": "Det tilpassede endepunktet er ikke konfigurert. Oppgi først serverens URL.",
     "saved": "Lagret!",
+    "loaded": "Lastet",
     "langNames": {
       "auto": "Automatisk gjenkjenning",
       "bg": "bulgarsk",
@@ -1314,6 +1331,7 @@
     "invalidEndpoint": "Ongeldige URL van het eindpunt – deze moet beginnen met http:// of https://.",
     "customNotSet": "Het aangepaste eindpunt is niet geconfigureerd. Voer eerst de URL van je server in.",
     "saved": "Opgeslagen!",
+    "loaded": "Geladen",
     "langNames": {
       "auto": "Automatische detectie",
       "bg": "Bulgaars",
@@ -1382,6 +1400,7 @@
     "invalidEndpoint": "Nieprawidłowy adres URL punktu końcowego — musi zaczynać się od http:// lub https://.",
     "customNotSet": "Niestandardowy punkt końcowy nie został skonfigurowany. Najpierw wprowadź adres URL serwera.",
     "saved": "Zapisano!",
+    "loaded": "Załadowano",
     "langNames": {
       "auto": "Wykrywanie automatyczne",
       "bg": "Bułgarski",
@@ -1450,6 +1469,7 @@
     "invalidEndpoint": "URL do ponto final inválido — deve começar por http:// ou https://.",
     "customNotSet": "O ponto de extremidade personalizado não está configurado. Introduza primeiro o URL do seu servidor.",
     "saved": "Guardado!",
+    "loaded": "Carregado",
     "langNames": {
       "auto": "Detecção automática",
       "bg": "Búlgaro",
@@ -1518,6 +1538,7 @@
     "invalidEndpoint": "URL-ul punctului final este nevalid – acesta trebuie să înceapă cu http:// sau https://.",
     "customNotSet": "Punctul final personalizat nu este configurat. Introduceți mai întâi adresa URL a serverului.",
     "saved": "Salvat!",
+    "loaded": "Încărcat",
     "langNames": {
       "auto": "Detectare automată",
       "bg": "bulgară",
@@ -1586,6 +1607,7 @@
     "invalidEndpoint": "Neplatná adresa URL koncového bodu – musí začínať http:// alebo https://.",
     "customNotSet": "Vlastný koncový bod nie je nakonfigurovaný. Najskôr zadajte URL adresu vášho servera.",
     "saved": "Uložené!",
+    "loaded": "Načítané",
     "langNames": {
       "auto": "Automatická detekcia",
       "bg": "bulharčina",
@@ -1654,6 +1676,7 @@
     "invalidEndpoint": "Neveljaven URL končne točke – mora se začeti z http:// ali https://.",
     "customNotSet": "Prilagojena končna točka ni nastavljena. Najprej vnesite URL naslov strežnika.",
     "saved": "Shranjeno!",
+    "loaded": "Naloženo",
     "langNames": {
       "auto": "Samodejno zaznavanje",
       "bg": "bolgarski",
@@ -1677,7 +1700,7 @@
       "lv": "latvijščina",
       "nb": "norveški (bokmål)",
       "nl": "nizozemščina",
-      "pl": "poljščina",
+      "pl": "Poljščina",
       "pt": "portugalščina",
       "pt-br": "portugalščina (Brazilija)",
       "pt-pt": "portugalščina (Portugalska)",
@@ -1722,6 +1745,7 @@
     "invalidEndpoint": "Ogiltig URL för slutpunkt – den måste börja med http:// eller https://.",
     "customNotSet": "Den anpassade slutpunkten är inte konfigurerad. Ange först din server-URL.",
     "saved": "Sparat!",
+    "loaded": "Laddad",
     "langNames": {
       "auto": "Automatisk identifiering",
       "bg": "bulgariska",
@@ -1790,6 +1814,7 @@
     "invalidEndpoint": "Geçersiz uç nokta URL'si – http:// veya https:// ile başlamalıdır.",
     "customNotSet": "Özel uç nokta yapılandırılmamış. Önce sunucu URL’nizi girin.",
     "saved": "Kaydedildi!",
+    "loaded": "Yüklendi",
     "langNames": {
       "auto": "Otomatik algılama",
       "bg": "Bulgarca",
@@ -1827,7 +1852,7 @@
       "zh": "Çince",
       "zh-hans": "Çince (Basitleştirilmiş)",
       "zh-hant": "Çince (Geleneksel)",
-      "be": "Belaruslu"
+      "be": "Belarusça"
     },
     "providerNames": {
       "google": "Google Translate (anahtar gerekmez)",
@@ -1858,6 +1883,7 @@
     "invalidEndpoint": "Неправильна URL-адреса кінцевої точки — вона повинна починатися з http:// або https://.",
     "customNotSet": "Налаштування користувацької кінцевої точки не виконано. Спочатку введіть URL-адресу вашого сервера.",
     "saved": "Збережено!",
+    "loaded": "Завантажено",
     "langNames": {
       "auto": "Автовиявлення",
       "bg": "Болгарська",
@@ -1926,6 +1952,7 @@
     "invalidEndpoint": "端点 URL 无效——它必须以 http:// 或 https:// 开头。",
     "customNotSet": "未配置自定义端点。请先输入您的服务器 URL。",
     "saved": "已保存！",
+    "loaded": "已加载",
     "langNames": {
       "auto": "自动检测",
       "bg": "保加利亚语",
@@ -1994,44 +2021,45 @@
     "invalidEndpoint": "Няправільны URL канцавой кропкі - ён павінен пачынацца з http:// або https://.",
     "customNotSet": "Карыстальніцкі эндпойнт не настроены. Спачатку ўвядзіце URL вашага сервера.",
     "saved": "Захавана!",
+    "loaded": "Загрузка",
     "langNames": {
       "auto": "Аўтавыяўленне",
       "bg": "Балгарская",
-      "cs": "Чэшскі",
-      "da": "Дацкая",
+      "cs": "Чэшская",
+      "da": "Данская",
       "de": "Нямецкая",
       "el": "Грэчаская",
       "en": "Англійская",
       "en-gb": "Англійская (брытанская)",
       "en-us": "Амерыканская англійская",
       "es": "Іспанская",
-      "et": "Эстонскі",
-      "fi": "Фінскі",
-      "fr": "Французскі",
-      "hu": "Венгерскі",
-      "id": "Інданезійскі",
-      "it": "Італьянскі",
-      "ja": "Японскі",
-      "ko": "Карэйскі",
-      "lt": "Літоўскі",
-      "lv": "Латвійскі",
+      "et": "Эстонская",
+      "fi": "Фінская",
+      "fr": "Французская",
+      "hu": "Венгерская",
+      "id": "Інданезійская",
+      "it": "Італьянская",
+      "ja": "Японская",
+      "ko": "Карэйская",
+      "lt": "Літоўская",
+      "lv": "Латвійская",
       "nb": "Нарвежская (букмол)",
-      "nl": "Голландскі",
-      "pl": "Паляк",
+      "nl": "Галандская",
+      "pl": "Польская",
       "pt": "Партугальская",
       "pt-br": "Партугальская (Бразілія)",
       "pt-pt": "Партугальская (Партугалія)",
       "ro": "Румынская",
-      "ru": "Рускі",
-      "sk": "Славацкая",
-      "sl": "Славенскі",
-      "sv": "Шведскі",
+      "ru": "Руская",
+      "sk": "Словацкая",
+      "sl": "Славенская",
+      "sv": "Шведская",
       "tr": "Турэцкая",
-      "uk": "Украінскі",
-      "zh": "Кітайскі",
+      "uk": "Украінская",
+      "zh": "Кітайская",
       "zh-hans": "Кітайская (упрошчаная)",
       "zh-hant": "Кітайская (традыцыйная)",
-      "be": "Беларускі"
+      "be": "Беларуская"
     },
     "providerNames": {
       "google": "Google Translate (ключ не патрабуецца)",

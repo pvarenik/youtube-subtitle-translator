@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>YouTube Mock</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;padding:20px;background:#0f0f0f;color:#fff}
+.video-container{max-width:1000px;margin:0 auto}
+.video-player{background:#000;aspect-ratio:16/9;border-radius:12px;overflow:hidden;position:relative}
+.video-player::before{content:"▶ Video Playing";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-size:24px}
+.subtitles-container{position:absolute;bottom:80px;left:0;right:0;padding:0 20px;text-align:center;z-index:10}
+.ytp-caption-segment{display:inline-block;background:rgba(0,0,0,.8);padding:8px 16px;border-radius:4px;margin:4px;font-size:18px;line-height:1.4}
+.ytst-word{cursor:pointer;border-radius:3px;transition:background .15s}
+.ytst-word:hover{background:rgba(255,255,255,.15);text-decoration:underline;text-decoration-style:dotted}
+#ytst-tooltip{position:fixed;z-index:2147483647;max-width:320px;padding:8px 12px;background:#202124;color:#e8eaed;font-family:Roboto,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.4;text-align:start;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.6);pointer-events:none;overflow-wrap:break-word}
+#ytst-tooltip.ytst-hidden{display:none}
+.ytst-chip{margin-top:4px;font-size:11px;opacity:.65}
+.ytst-error{background:#3c1e1e}
+.ytst-word:hover{background:rgba(255,255,255,.15);text-decoration:underline;text-decoration-style:dotted}
+#ytst-tooltip{background:#202124;color:#e8eaed;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+#ytst-tooltip.ytst-error{background:#3c1e1e;color:#f28b82}
+.ytst-chip{background:#3c4043;color:#8ab4f8}
+[data-theme=light] .ytst-word:hover{background:rgba(0,0,0,.1)}
+[data-theme=light] #ytst-tooltip{background:#1f1f1f;color:#fff}
+[data-theme=light] .ytst-chip{opacity:.65}
+</style>
+</head>
+<body data-theme="dark">
+<div class="video-container">
+<div class="video-player">
+<div class="subtitles-container">
+<span class="ytp-caption-segment" data-ytst-processed="Hello world, this is a test subtitle for translation demonstration."><span class="ytst-word">Hello</span> <span class="ytst-word">world,</span> <span class="ytst-word">this</span> <span class="ytst-word">is</span> <span class="ytst-word">a</span> <span class="ytst-word">test</span> <span class="ytst-word">subtitle</span> <span class="ytst-word">for</span> <span class="ytst-word">translation</span> <span class="ytst-word">demonstration.</span></span>
+</div>
+</div>
+</div>
+<div id="ytst-tooltip" class="ytst-tooltip ytst-hidden"></div>
+<script>
+document.querySelectorAll(".ytst-word").forEach(w=>{
+w.addEventListener("click",e=>{
+e.preventDefault();
+const t=document.getElementById("ytst-tooltip");
+const r=w.getBoundingClientRect();
+t.classList.remove("ytst-hidden");
+t.innerHTML="<div class=ytst-text>Привет (Privet)</div><div class=ytst-chip>EN → RU</div>";
+const tr=t.getBoundingClientRect();
+let tp=r.top-tr.height-8;
+if(tp<8)tp=r.bottom+8;
+let lf=r.left+r.width/2-tr.width/2;
+if(lf<8)lf=8;
+if(lf+tr.width>window.innerWidth-8)lf=window.innerWidth-tr.width-8;
+t.style.top=tp+"px";
+t.style.left=lf+"px";
+});
+});
+document.addEventListener("click",e=>{
+if(!e.target.closest(".ytst-word"))document.getElementById("ytst-tooltip").classList.add("ytst-hidden");
+});
+</script>
+</body>
+</html>

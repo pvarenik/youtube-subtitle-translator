@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Subtitle Word Translator",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "minimum_chrome_version": "103",
   "description": "Click on a word in YouTube subtitles to see its translation in a tooltip.",
   "icons": {
@@ -36,7 +36,8 @@
     "open_in_tab": true
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {

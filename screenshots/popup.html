@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>YouTube Subtitle Translator</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f5f7;margin:0 auto;padding:24px;color:#1a1a1a;width:480px}
+main{margin:0 auto}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.top-controls{display:flex;align-items:center;gap:8px;flex-shrink:0}
+h1{font-size:20px;margin:0;flex:1}
+h2{font-size:15px;margin:0 0 12px;color:#777}
+.lang-switcher{position:relative}
+.lang-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border:none;border-radius:8px;background:#e0e0e0;cursor:pointer;font-size:16px;line-height:1;color:#1a1a1a;transition:background .15s,box-shadow .15s}
+.lang-btn:hover{box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.lang-btn .flag{font-size:20px;line-height:1}
+.lang-btn .caret{font-size:10px;color:#777;margin-left:2px}
+.lang-list{position:absolute;top:100%;right:0;margin:4px 0 0;padding:6px;background:#fff;border:1px solid #ccc;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);list-style:none;max-height:240px;overflow-y:auto;min-width:180px;z-index:10}
+.lang-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:14px;color:#1a1a1a;transition:background .1s;white-space:nowrap}
+.lang-list li:hover{background:#f0f0f2}
+.lang-list .flag{font-size:18px;line-height:1}
+.lang-list .lang-name{flex:1;text-align:left}
+.theme-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:none;border-radius:8px;background:#e0e0e0;cursor:pointer;font-size:18px;line-height:1;color:#1a1a1a;transition:background .15s,box-shadow .15s}
+.theme-btn:hover{box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.card{background:#fff;border-radius:10px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.field{display:block;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field span{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#1a1a1a}
+select,input{width:100%;padding:8px 10px;font-size:14px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#1a1a1a}
+.hint{font-size:12px;color:#777;margin:6px 0 0;line-height:1.4}
+.actions{display:flex;align-items:center;gap:12px}
+.btn{padding:8px 16px;font-size:13px;font-weight:600;border:1px solid #ccc;border-radius:6px;background:#fff;color:#1a1a1a;cursor:pointer}
+.status{font-size:13px;color:#2e7d32}
+.status-error{color:#b3261e}
+.help-link{position:fixed;right:16px;bottom:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff;color:#777;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+<main>
+<div class="top-bar">
+<h1>YouTube Subtitle Translator</h1>
+<div class="top-controls">
+<div class="lang-switcher">
+<button type="button" id="langBtn" class="lang-btn" aria-haspopup="listbox" aria-expanded="false">
+<span class="flag">🇺🇸</span><span class="caret">▼</span></button>
+<ul id="langList" class="lang-list" role="listbox" hidden>
+<li role="option" data-lang="en" tabindex="-1"><span class="flag">🇺🇸</span><span class="lang-name">English</span></li>
+<li role="option" data-lang="ru" tabindex="-1"><span class="flag">🇷🇺</span><span class="lang-name">Русский</span></li>
+<li role="option" data-lang="be" tabindex="-1"><span class="flag">🇧🇾</span><span class="lang-name">Беларуская</span></li>
+</ul>
+</div>
+<button type="button" class="theme-btn" aria-label="Toggle theme"><span class="theme-icon">🌙</span></button>
+</div>
+</div>
+<section class="card"><h2>Languages</h2>
+<label class="field"><span>Subtitle source language</span>
+<select id="sourceLang"><option value="auto">Auto-detect</option><option value="en">English</option><option value="ru">Russian</option></select>
+<p class="hint">Default is Auto-detect.</p></label>
+<label class="field"><span>Translation language</span>
+<select id="targetLang"><option value="en">English</option><option value="ru">Russian</option></select></label>
+</section>
+<section class="card"><h2>Translation service</h2>
+<label class="field"><span>Provider</span>
+<select id="provider"><option value="google">Google Translate (no key needed)</option><option value="deepl">DeepL Free (API key required)</option><option value="deepl-pro">DeepL Pro (API key required)</option><option value="libretranslate">LibreTranslate</option><option value="custom">Custom endpoint</option></select></label>
+<label class="field" id="apiKeyField" style="display: none;"><span>API key</span><input type="password" id="apiKey" autocomplete="off" placeholder="Enter API key" /><p class="hint">Required for DeepL. Optional for LibreTranslate / custom endpoint.</p></label>
+<label class="field" id="endpointField" style="display: none;"><span>API endpoint</span><input type="text" id="customEndpoint" placeholder="https://example.com/translate" /><p class="hint">Your server must accept LibreTranslate-compatible requests.</p></label>
+</section>
+<div class="actions"><button class="btn" type="button">Test</button><span class="status"></span></div>
+</main>
+<a class="help-link" href="https://github.com/pvarenik/youtube-subtitle-translator" target="_blank" rel="noopener noreferrer" title="View on GitHub">?</a>
+<script>const langBtn=document.getElementById("langBtn"),langList=document.getElementById("langList");langBtn?.addEventListener("click",()=>{langList.hidden=!langList.hidden;langBtn.setAttribute("aria-expanded",!langList.hidden);});document.addEventListener("click",e=>{if(!langBtn.contains(e.target)&&!langList.contains(e.target)){langList.hidden=!0;}});</script>
+</body>
+</html>
