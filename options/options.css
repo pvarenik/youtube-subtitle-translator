@@ -71,6 +71,9 @@ h1 {
   font-size: 20px;
   margin: 0;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 h2 {

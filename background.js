@@ -209,8 +209,10 @@ api.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       var response = { ok: true, translatedText: result.translatedText };
       if (settings.sourceLang === "auto" && result.detectedLang) {
         response.detectedLang = result.detectedLang;
-        response.targetLang = settings.targetLang;
+      } else {
+        response.detectedLang = settings.sourceLang;
       }
+      response.targetLang = settings.targetLang;
       sendResponse(response);
     });
   }).catch(function(err) {

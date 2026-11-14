@@ -95,8 +95,7 @@ var els = {
   themeIcon:      document.getElementById("themeIcon")
 };
 
-function rebuildSelect(selectEl, codes, namesMap) {
-  var saved = selectEl.value;
+function rebuildSelect(selectEl, codes, namesMap, savedValue) {
   selectEl.innerHTML = "";
   for (var i = 0; i < codes.length; i++) {
     var code = codes[i];
@@ -105,13 +104,23 @@ function rebuildSelect(selectEl, codes, namesMap) {
     opt.textContent = (namesMap && namesMap[code]) ? namesMap[code] : code;
     selectEl.appendChild(opt);
   }
-  selectEl.value = saved;
+  var valueToUse = savedValue !== undefined ? savedValue : selectEl.value;
+  if (codes.indexOf(valueToUse) !== -1) {
+    selectEl.value = valueToUse;
+  } else {
+    selectEl.value = codes[0];
+  }
 }
 
 function applyLang(lang) {
   if (!I18N[lang]) { return; }
   currentLang = lang;
   var t = I18N[lang];
+
+  // Preserve current select values before rebuilding
+  var savedSourceLang = els.sourceLang.value;
+  var savedTargetLang = els.targetLang.value;
+  var savedProvider = els.provider.value;
 
   els.title.textContent          = t.title;
   els.sectionLangs.textContent   = t.sectionLangs;
@@ -127,9 +136,9 @@ function applyLang(lang) {
   els.testBtn.textContent        = t.testLabel;
   document.documentElement.lang  = lang;
 
-  rebuildSelect(els.sourceLang, SOURCE_LANG_CODES, t.langNames);
-  rebuildSelect(els.targetLang, TARGET_LANG_CODES, t.langNames);
-  rebuildSelect(els.provider,   PROVIDER_CODES,    t.providerNames);
+  rebuildSelect(els.sourceLang, SOURCE_LANG_CODES, t.langNames, savedSourceLang);
+  rebuildSelect(els.targetLang, TARGET_LANG_CODES, t.langNames, savedTargetLang);
+  rebuildSelect(els.provider,   PROVIDER_CODES,    t.providerNames, savedProvider);
 
   // Update language dropdown button flag
   els.langFlag.textContent = LANG_FLAGS[lang] || "🏳️";
@@ -152,6 +161,12 @@ function nudgePopupResize() {
   root.style.display = "none";
   void root.offsetHeight;
   root.style.display = prev;
+  // Also trigger on body for browsers that need it
+  var body = document.body;
+  var prevBody = body.style.display;
+  body.style.display = "none";
+  void body.offsetHeight;
+  body.style.display = prevBody;
 }
 
 function updateVisibility() {
@@ -257,9 +272,21 @@ function persistSettings() {
   var root = document.documentElement;
   var theme = root.getAttribute("data-theme") || "system";
   s.theme = theme;
-  api.storage.sync.set(s).then(function() {
+  
+  // Save critical settings to localStorage and sessionStorage immediately for instant persistence
+  try {
+    localStorage.setItem("ytst_targetLang", s.targetLang);
+    localStorage.setItem("ytst_sourceLang", s.sourceLang);
+    localStorage.setItem("ytst_provider", s.provider);
+    sessionStorage.setItem("ytst_targetLang", s.targetLang);
+    sessionStorage.setItem("ytst_sourceLang", s.sourceLang);
+    sessionStorage.setItem("ytst_provider", s.provider);
+  } catch (e) {}
+
+  return api.storage.sync.set(s).then(function() {
     var t = I18N[currentLang];
-    showStatus(t ? t.saved : "Saved!", false);
+    var langName = (t && t.langNames && t.langNames[s.targetLang]) ? t.langNames[s.targetLang] : s.targetLang;
+    showStatus((t ? t.saved : "Saved!") + " — " + langName, false);
   });
 }
 
@@ -372,22 +399,121 @@ function runTest() {
 // ---------- Init ----------
 
 function init(settings) {
+  // Ensure targetLang is valid (migrate from old 'en' to 'en-us')
+  if (TARGET_LANG_CODES.indexOf(settings.targetLang) === -1) {
+    settings.targetLang = "ru";
+  }
+  // Ensure sourceLang is valid
+  if (SOURCE_LANG_CODES.indexOf(settings.sourceLang) === -1) {
+    settings.sourceLang = "auto";
+  }
+
+  // PRIORITY: localStorage/sessionStorage over sync storage (instant persistence)
+  var localTarget = null, localSource = null, localProvider = null;
+  try {
+    localTarget = localStorage.getItem("ytst_targetLang") || sessionStorage.getItem("ytst_targetLang");
+    localSource = localStorage.getItem("ytst_sourceLang") || sessionStorage.getItem("ytst_sourceLang");
+    localProvider = localStorage.getItem("ytst_provider") || sessionStorage.getItem("ytst_provider");
+  } catch (e) {}
+
+  // Use localStorage value if valid (overrides sync storage)
+  if (localTarget && TARGET_LANG_CODES.indexOf(localTarget) !== -1) {
+    settings.targetLang = localTarget;
+  }
+  if (localSource && SOURCE_LANG_CODES.indexOf(localSource) !== -1) {
+    settings.sourceLang = localSource;
+  }
+  if (localProvider && PROVIDER_CODES.indexOf(localProvider) !== -1) {
+    settings.provider = localProvider;
+  }
+
+  // Then validate (migrate old values)
+  if (TARGET_LANG_CODES.indexOf(settings.targetLang) === -1) {
+    settings.targetLang = "ru";
+  }
+  if (SOURCE_LANG_CODES.indexOf(settings.sourceLang) === -1) {
+    settings.sourceLang = "auto";
+  }
+
   els.sourceLang.value     = settings.sourceLang;
   els.targetLang.value     = settings.targetLang;
   els.provider.value       = settings.provider;
   els.apiKey.value         = settings.apiKey;
   els.customEndpoint.value = settings.customEndpoint;
 
+  // Immediately sync to localStorage/sessionStorage to ensure instant persistence
+  try {
+    localStorage.setItem("ytst_sourceLang", settings.sourceLang);
+    localStorage.setItem("ytst_targetLang", settings.targetLang);
+    localStorage.setItem("ytst_provider", settings.provider);
+    sessionStorage.setItem("ytst_sourceLang", settings.sourceLang);
+    sessionStorage.setItem("ytst_targetLang", settings.targetLang);
+    sessionStorage.setItem("ytst_provider", settings.provider);
+  } catch (e) {}
+
   applyLang(settings.uiLang || "en");
   applyTheme(settings.theme || "system");
   updateVisibility();
 
-  els.sourceLang.addEventListener("change", persistSettings);
-  els.targetLang.addEventListener("change", persistSettings);
-  els.provider.addEventListener("change", function() {
+  // Show loaded language confirmation
+  if (localTarget) {
+    var t = I18N[currentLang] || I18N.en;
+    var langName = (t && t.langNames && t.langNames[settings.targetLang]) ? t.langNames[settings.targetLang] : settings.targetLang;
+    setTimeout(function() { showStatus((t ? t.loaded : "Loaded") + ": " + langName, false); }, 100);
+  }
+
+  function saveToLocalStorageSync() {
+    try {
+      localStorage.setItem("ytst_targetLang", els.targetLang.value);
+      localStorage.setItem("ytst_sourceLang", els.sourceLang.value);
+      localStorage.setItem("ytst_provider", els.provider.value);
+      sessionStorage.setItem("ytst_targetLang", els.targetLang.value);
+      sessionStorage.setItem("ytst_sourceLang", els.sourceLang.value);
+      sessionStorage.setItem("ytst_provider", els.provider.value);
+    } catch (e) {}
+  }
+
+  // Periodic save as final safety net (every 2 seconds)
+  setInterval(function() {
+    saveToLocalStorageSync();
+  }, 2000);
+
+  // Force-save on unload - DIRECT synchronous localStorage writes (no async)
+  window.addEventListener("pagehide", function() {
+    saveToLocalStorageSync();
+  });
+  window.addEventListener("beforeunload", function() {
+    saveToLocalStorageSync();
+  });
+  // Also save on visibility change (when popup loses focus)
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "hidden") {
+      saveToLocalStorageSync();
+    }
+  });
+
+  els.sourceLang.addEventListener("change", function() {
+    persistSettings();
+    try { localStorage.setItem("ytst_sourceLang", els.sourceLang.value); sessionStorage.setItem("ytst_sourceLang", els.sourceLang.value); } catch (e) {}
+  });
+  els.sourceLang.addEventListener("blur", function() {
+    try { localStorage.setItem("ytst_sourceLang", els.sourceLang.value); sessionStorage.setItem("ytst_sourceLang", els.sourceLang.value); } catch (e) {}
+  });
+  els.targetLang.addEventListener("change", function() {
+    persistSettings();
+    try { localStorage.setItem("ytst_targetLang", els.targetLang.value); sessionStorage.setItem("ytst_targetLang", els.targetLang.value); } catch (e) {}
+  });
+  els.targetLang.addEventListener("blur", function() {
+    try { localStorage.setItem("ytst_targetLang", els.targetLang.value); sessionStorage.setItem("ytst_targetLang", els.targetLang.value); } catch (e) {}
+  });
+  els.provider.addEventListener("input", function() {
     updateVisibility();
     persistSettings();
+    try { localStorage.setItem("ytst_provider", els.provider.value); sessionStorage.setItem("ytst_provider", els.provider.value); } catch (e) {}
     tryEndpointPermission();
+  });
+  els.provider.addEventListener("blur", function() {
+    try { localStorage.setItem("ytst_provider", els.provider.value); sessionStorage.setItem("ytst_provider", els.provider.value); } catch (e) {}
   });
   els.apiKey.addEventListener("input", persistSettingsDebounced);
   els.customEndpoint.addEventListener("input", persistSettingsDebounced);
@@ -405,6 +531,7 @@ function init(settings) {
     var next = current === "system" ? "light" : (current === "light" ? "dark" : "system");
     applyTheme(next);
     persistSettings();
+    nudgePopupResize();
   });
 
   // Language dropdown

@@ -19,7 +19,7 @@ var CJK_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han
 var CJK_PUNCT_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{General_Category=Po}\p{General_Category=Pd}\p{General_Category=Ps}\p{General_Category=Pe}\p{General_Category=Pi}\p{General_Category=Pf}]/u;
 
   var tooltipEl = null;
-  var currentRequestId = 0;
+  var currentAbortController = null;
   var hideTimer = null;
   var processTimer = null;
 
@@ -99,12 +99,17 @@ var CJK_PUNCT_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Gene
     var word = cleanWord(span.textContent || "");
     if (!word) { return; }
 
-    var myId = ++currentRequestId;
+    // Cancel any pending request
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
     showTooltip(span, "...", false, "");
 
     api.runtime.sendMessage({ type: "TRANSLATE_WORD", text: word })
       .then(function(response) {
-        if (myId !== currentRequestId) { return; }
+        if (currentAbortController.signal.aborted) { return; }
         if (!response || !response.ok) {
           var msg = (response && response.error) || "no response";
           if (response && response.code === "INVALID_ENDPOINT") { msg = "invalid endpoint URL"; }
@@ -119,7 +124,9 @@ var CJK_PUNCT_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Gene
         showTooltip(span, response.translatedText || "(empty)", false, chip);
       })
       .catch(function(err) {
-        if (myId !== currentRequestId) { return; }
+        if (currentAbortController.signal.aborted) { return; }
+        // Ignore AbortError
+        if (err && err.name === "AbortError") { return; }
         showTooltip(span, "Error: " + (err.message || String(err)), true, "");
       });
   }
