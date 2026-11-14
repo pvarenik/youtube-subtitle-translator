@@ -13,4 +13,15 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npm run lint
+      - run: |
+          # Run lint and allow the known Firefox-incompatible service_worker error
+          # (expected for cross-browser MV3: Chrome uses service_worker, Firefox uses scripts)
+          npx web-ext lint --output=json > lint-output.json 2>&1
+          # Count errors that are NOT the expected service_worker error
+          ERRORS=$(cat lint-output.json | grep -E '^{' | jq '[.errors[] | select(.code != "MANIFEST_FIELD_UNSUPPORTED" or (.description | test("service_worker") | not))] | length')
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "Unexpected errors found:"
+            cat lint-output.json | grep -E '^{' | jq '.errors[] | select(.code != "MANIFEST_FIELD_UNSUPPORTED" or (.description | test("service_worker") | not))'
+            exit 1
+          fi
+          echo "Lint passed (only expected service_worker error present)"
